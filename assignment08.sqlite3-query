@@ -1,0 +1,91 @@
+-- database: ./assignment08.db
+
+-- Question 1
+SELECT *
+FROM drivers
+ORDER BY team ASC, victories DESC;
+
+-- Question 2: victories above the overall average
+SELECT *
+FROM drivers
+WHERE victories > (SELECT AVG(victories) FROM drivers)
+ORDER BY victories DESC;
+
+-- Question 3: podiums > 50 OR team is 'Ferrari'
+SELECT driver_name, team, podiums
+FROM drivers
+WHERE podiums > 50
+   OR team = 'Ferrari'
+ORDER BY podiums DESC, driver_name ASC;
+
+-- Question 4: count by nationality, considering only drivers with podiums > 40
+SELECT
+  nationality,
+  COUNT(*) AS driver_count
+FROM drivers
+WHERE podiums > 40   
+GROUP BY nationality
+ORDER BY driver_count DESC, nationality ASC;
+
+--Question 5: average points per team (rounded to two decimals)
+SELECT
+  team,
+  ROUND(AVG(points), 2) AS avg_points
+FROM drivers
+GROUP BY team
+ORDER BY team ASC;
+
+--Question 6: top 20 % of drivers by points
+SELECT
+  driver_name,
+  team,
+  points
+FROM drivers
+ORDER BY points DESC
+LIMIT 3;    -- 3 = ceil(0.2 × 14)
+
+--Question 7: totals and average for German drivers
+SELECT
+  SUM(victories) AS total_victories,
+  SUM(podiums)   AS total_podiums,
+  ROUND(AVG(points), 2) AS avg_points
+FROM drivers
+WHERE nationality = 'German';
+
+--Questtion 8: drivers whose names contain both 'a' and 'e' (case-insensitive)
+SELECT
+  driver_name,
+  team,
+  victories,
+  points
+FROM drivers
+WHERE LOWER(driver_name) LIKE '%a%' 
+  AND LOWER(driver_name) LIKE '%e%'
+ORDER BY driver_name ASC;
+
+--Question 9: most victories within each team
+WITH ranked AS (
+  SELECT
+    team,
+    driver_name,
+    victories,
+    RANK() OVER (PARTITION BY team ORDER BY victories DESC) AS r
+  FROM drivers
+)
+SELECT team, driver_name, victories
+FROM ranked
+WHERE r = 1
+ORDER BY team ASC, driver_name ASC;
+
+--Question 10: drivers whose points are below their own team's average
+SELECT
+  driver_name,
+  team,
+  points
+FROM drivers d
+WHERE points < (
+  SELECT AVG(points)
+  FROM drivers
+  WHERE team = d.team
+)
+ORDER BY team ASC, driver_name ASC;
